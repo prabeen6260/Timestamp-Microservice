@@ -11,6 +11,21 @@ app.get("/", (req, res) => {
 
 app.use(express.static(__dirname + "/public"));
 
+app.get(
+  "/api",
+  (req, res, next) => {
+    req.unix = new Date().getTime();
+    req.utc = new Date().toUTCString();
+    next();
+  },
+  (req, res) => {
+    res.json({ unix: req.unix, utc: req.utc });
+  },
+);
+app.get("/api/hello", function (req, res) {
+  res.json({ greeting: "hello API" });
+});
+
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = [
   "Jan",
@@ -27,15 +42,17 @@ const MONTHS = [
   "Dec",
 ];
 app.get(
-  "/api/:word",
+  "/api/:date",
   (req, res, next) => {
-    if (req.params.word.includes("-")) {
-      let dateString = req.params.word.toString();
+    let validDate = Date.parse(req.params.date);
+    let validUnix = /^\d+$/;
+    if (/^\d{4}-\d{1,2}-\d{0,2}/.test(req.params.date) && validDate) {
+      let dateString = req.params.date.toString();
       req.unix = parseInt(new Date(dateString).getTime());
       req.utc = new Date(dateString).toUTCString();
       next();
-    } else {
-      let dateInt = parseInt(req.params.word);
+    } else if (validUnix.test(req.params.date)) {
+      let dateInt = parseInt(req.params.date);
       let dateObj = new Date(dateInt);
       let dayy = dateObj.getUTCDay();
       let day = DAYS[dayy];
@@ -43,23 +60,21 @@ app.get(
       let monthh = dateObj.getUTCMonth();
       let month = MONTHS[monthh];
       let year = dateObj.getUTCFullYear();
-      let hours = dateObj.getUTCHours();
-      let minutes = dateObj.getUTCMinutes();
-      let seconds = dateObj.getUTCSeconds();
+      let hours = dateObj.getUTCHours().toString().padStart(2, "0");
+      let minutes = dateObj.getUTCMinutes().toString().padStart(2, "0");
+      let seconds = dateObj.getUTCSeconds().toString().padStart(2, "0");
       let finalDate = `${day}, ${date} ${month} ${year} ${hours}:${minutes}:${seconds} GMT`;
       req.utc = finalDate;
-      req.unix = parseInt(req.params.word);
+      req.unix = parseInt(req.params.date);
       next();
+    } else {
+      res.json({ error: "Invalid Date" });
     }
   },
   (req, res) => {
     res.json({ unix: req.unix, utc: req.utc });
   },
 );
-
-app.get("/api/hello", function (req, res) {
-  res.json({ greeting: "hello API" });
-});
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
