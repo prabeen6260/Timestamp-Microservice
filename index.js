@@ -1,5 +1,7 @@
+require("dotenv").config();
 const express = require("express");
 const app = express();
+const port = process.env.PORT || 3000;
 
 const cors = require("cors");
 app.use(cors({ optionsSuccessStatus: 200 }));
@@ -20,7 +22,7 @@ app.get(
   },
   (req, res) => {
     res.json({ unix: req.unix, utc: req.utc });
-  },
+  }
 );
 app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
@@ -73,10 +75,10 @@ app.get(
   },
   (req, res) => {
     res.json({ unix: req.unix, utc: req.utc });
-  },
+  }
 );
 
 // listen for requests :)
-var listener = app.listen(process.env.PORT, function () {
+var listener = app.listen(port, function () {
   console.log("Your app is listening on port " + listener.address().port);
 });
